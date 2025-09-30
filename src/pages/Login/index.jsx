@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useUser } from "../context/userContext";
 import "./index.css";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+ useEffect(() => {
+    if (user) {
+      alert("User already logged in!");
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +36,7 @@ function LoginPage() {
       );
 
       if (res.data.success) {
+        setUser({ username: form.username, role: res.data.role });
         navigate("/");  // redirect to dashboard/home
       } else {
         setError(res.data.message || "Login failed");
