@@ -2,8 +2,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;  
+  min-width: 100vw;        /* full screen height */
   background: #f3f4f6;
+  padding: 1rem;              /* padding for small screens */
+  box-sizing: border-box;
 }
 
 .login-box {
@@ -11,8 +14,10 @@
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 320px;
+  width: 100%;                /* take full width by default */
+  max-width: 400px;           /* limit box width on larger screens */
   text-align: center;
+  margin: 0 auto;             /* ✅ ensures horizontal centering inside flex */
 }
 
 .login-box h2 {
@@ -26,18 +31,47 @@
   margin: 0.5rem 0;
   border: 1px solid #ddd;
   border-radius: 8px;
+  font-size: 1rem;
 }
 
 .login-box button {
   width: 100%;
   padding: 0.75rem;
   background: #2563eb;
-  color:white;
+  color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease;
 }
 
 .login-box button:hover {
   background: #1d4ed8;
+}
+
+/* 🔹 Mobile responsiveness */
+@media (max-width: 480px) {
+  .login-box {
+    padding: 1.5rem;
+    border-radius: 10px;
+  }
+
+  .login-box h2 {
+    font-size: 1.25rem;
+  }
+
+  .login-box input,
+  .login-box button {
+    padding: 0.65rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* 🔹 Large desktop responsiveness */
+@media (min-width: 1200px) {
+  .login-box {
+    max-width: 450px; /* allow a slightly bigger box on large screens */
+    padding: 2.5rem;
+  }
 }

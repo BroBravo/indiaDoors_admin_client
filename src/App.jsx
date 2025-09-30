@@ -37,6 +37,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/Login";
 import HomePage from "./pages/Home";
+import ProtectedRoute from "./components/protectedRoute";
 
 // ✅ helper: check token
 const isAuthenticated = () => {
@@ -55,11 +56,14 @@ const isAuthenticated = () => {
 function App() {
   return (
     <Routes>
+      
+      <Route path="/login" element={<LoginPage />} />
       <Route
         path="/"
-        element={isAuthenticated() ? <HomePage /> : <Navigate to="/login" />}
+        element={<ProtectedRoute>
+                  <HomePage />
+                 </ProtectedRoute>}
       />
-      <Route path="/login" element={<LoginPage />} />
     </Routes>
   );
 }

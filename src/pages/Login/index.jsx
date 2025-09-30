@@ -1,27 +1,42 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./index.css";
 
 function LoginPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
-
+  const [error, setError] = useState("");
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    // 🔑 Here you’ll call backend API for login
-    // Dummy token with 1hr expiry for now
-    const fakeToken = {
-      exp: Math.floor(Date.now() / 1000) + 60 * 60,
-    };
-    const token = `header.${btoa(JSON.stringify(fakeToken))}.sig`;
+    try {
+      const res = await axios.post(
+        `${baseURL}/admin/user/login`,
+        {
+          loginId: form.username,   // backend expects username OR phone
+          password: form.password,
+        },
+        { withCredentials: true }  // ✅ important so cookie is stored
+      );
 
-    localStorage.setItem("authToken", token);
-    navigate("/");
+      if (res.data.success) {
+        navigate("/");  // redirect to dashboard/home
+      } else {
+        setError(res.data.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(
+        err.response?.data?.message || "Something went wrong. Please try again."
+      );
+    }
   };
 
   return (
@@ -44,6 +59,8 @@ function LoginPage() {
           onChange={handleChange}
           required
         />
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
         <button type="submit">Login</button>
       </form>
     </div>
