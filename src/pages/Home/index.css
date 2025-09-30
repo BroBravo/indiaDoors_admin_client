@@ -1,5 +1,6 @@
 .home-container {
   min-height: 100vh;
+  min-width: 100vw;
   background: #f9fafb;
   display: flex;
   flex-direction: column;
