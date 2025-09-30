@@ -1,0 +1,37 @@
+.home-container {
+  min-height: 100vh;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-header {
+  background: #2563eb;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home-header h1 {
+  font-size: 1.5rem;
+}
+
+.home-header button {
+  background: #ef4444;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.home-header button:hover {
+  background: #dc2626;
+}
+
+.home-main {
+  flex: 1;
+  padding: 2rem;
+}

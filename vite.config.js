@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const strictPort = String(env.VITE_STRICT_PORT ?? 'true').toLowerCase() === 'true'
   const host = env.VITE_HOST || 'localhost'
 
-  // 👇 always controlled by .env (e.g., "/" in dev, "/admin/" in prod)
+  // 👇 always controlled by .env (e.g., "/" in dev, "/admin/client/" in prod)
   const base = env.VITE_BASE || '/'
 
   return {
