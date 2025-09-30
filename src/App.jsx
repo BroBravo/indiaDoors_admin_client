@@ -37,7 +37,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/Login";
 import HomePage from "./pages/Home";
-import ProtectedRoute from "./components/protectedRoute";
+import ProtectedRoute from "./components/protectedRoute.jsx";
 
 // ✅ helper: check token
 const isAuthenticated = () => {
