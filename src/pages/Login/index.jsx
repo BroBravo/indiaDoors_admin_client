@@ -6,20 +6,20 @@ import "./index.css";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, setUser, loading } = useUser();
+  const { user, setUser } = useUser();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
-  const alertedRef = useRef(false);
+  //const alertedRef = useRef(false);
 
   useEffect(() => {
-    if (loading) return;
-    if (user && !alertedRef.current) {
-      alertedRef.current = true;         // ensure single alert
-      alert("User already logged in!");
-      navigate("/", { replace: true });  // then redirect
+    
+    if (user) {
+             
+     // alert("User already logged in!");
+      navigate("/", { replace: true });  
     }
-  }, [user, loading, navigate]);
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -54,7 +54,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-container">
+     <div className="login-container">
       <form className="login-box" onSubmit={handleSubmit}>
         <h2>Admin Login</h2>
         <input
@@ -77,7 +77,7 @@ function LoginPage() {
         {error && <p style={{ color: "red" }}>{error}</p>}
         <button type="submit">Login</button>
       </form>
-    </div>
+    </div> 
   );
 }
 
