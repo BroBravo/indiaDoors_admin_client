@@ -54,7 +54,8 @@ function LoginPage() {
   };
 
   return (
-     <div className="login-container">
+    <>
+     {!user && <div className="login-container">
       <form className="login-box" onSubmit={handleSubmit}>
         <h2>Admin Login</h2>
         <input
@@ -77,7 +78,8 @@ function LoginPage() {
         {error && <p style={{ color: "red" }}>{error}</p>}
         <button type="submit">Login</button>
       </form>
-    </div> 
+    </div> }
+    </>
   );
 }
 
