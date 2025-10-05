@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUser } from "../../context/userContext";
@@ -6,20 +6,24 @@ import "./index.css";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { user, setUser, loading } = useUser();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const alertedRef = useRef(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (user && !alertedRef.current) {
+      alertedRef.current = true;         // ensure single alert
+      alert("User already logged in!");
+      navigate("/", { replace: true });  // then redirect
+    }
+  }, [user, loading, navigate]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
- useEffect(() => {
-    if (user) {
-      alert("User already logged in!");
-      navigate("/");
-    }
-  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
