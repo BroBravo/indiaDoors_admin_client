@@ -9,7 +9,8 @@
   --pg-accent-contrast: #ffffff;
 }
 
-.pg-table-container {
+/* 🧱 Main container */
+.tableContainer {
   width: 100%;
   background: var(--pg-bg);
   border: 1px solid var(--pg-border);
@@ -18,12 +19,14 @@
   overflow: hidden;
 }
 
-.pg-table-wrapper {
+/* Wrapper for table scroll */
+.tableWrapper {
   width: 100%;
   overflow-x: auto;
 }
 
-.pg-table {
+/* Core table */
+.table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -31,7 +34,8 @@
   font-size: 14px;
 }
 
-.pg-table thead th {
+/* Table head */
+.table thead th {
   position: sticky;
   top: 0;
   background: var(--pg-header-bg);
@@ -42,36 +46,42 @@
   white-space: nowrap;
 }
 
-.pg-table tbody td {
+/* Table body */
+.table tbody td {
   padding: 12px 14px;
   border-bottom: 1px solid var(--pg-border);
   vertical-align: top;
 }
 
-.pg-table tbody tr:hover {
+/* Hover rows */
+.table tbody tr:hover {
   background: var(--pg-row-hover);
 }
 
-.pg-empty {
+/* Empty message */
+.empty {
   padding: 14px;
   text-align: center;
   color: #6b7280;
 }
 
-.pg-error {
+/* Error message */
+.error {
   margin: 10px 12px 0;
   color: #b91c1c;
   font-weight: 500;
 }
 
-.pg-controls {
+/* Pagination controls */
+.controls {
   display: flex;
   justify-content: center;
   padding: 12px;
   gap: 10px;
 }
 
-.pg-button {
+/* Buttons */
+.button {
   appearance: none;
   border: 1px solid var(--pg-border);
   background: var(--pg-bg);
@@ -82,25 +92,26 @@
   transition: transform 0.06s ease, box-shadow 0.1s ease, background 0.1s ease;
 }
 
-.pg-button:hover:not(:disabled) {
+.button:hover:not(:disabled) {
   background: #f3f4f6;
 }
 
-.pg-button:active:not(:disabled) {
+.button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.pg-button:disabled {
+.button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pg-button.primary {
+/* Primary button variant */
+.primary {
   background: var(--pg-accent);
   color: var(--pg-accent-contrast);
   border-color: var(--pg-accent);
 }
 
-.pg-button.primary:hover:not(:disabled) {
+.primary:hover:not(:disabled) {
   filter: brightness(0.98);
 }

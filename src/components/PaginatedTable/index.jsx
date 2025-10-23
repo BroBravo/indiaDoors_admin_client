@@ -1,6 +1,6 @@
 // src/components/PaginatedTable.jsx
 import { useEffect, useState, useCallback } from "react";
-import "./index.css";
+import styles from "./index.module.css"; // ✅ CSS Module import
 
 /**
  * columns: [{ key: 'id', header: 'ID', render?: (value, row) => ReactNode }]
@@ -8,7 +8,7 @@ import "./index.css";
  * pageSize: number (default 10)
  * initialOffset: number (default 0)
  */
- function PaginatedTable({
+function PaginatedTable({
   columns,
   fetchPage,
   pageSize = 10,
@@ -43,9 +43,9 @@ import "./index.css";
   }, []);
 
   return (
-    <div className="pg-table-container">
-      <div className="pg-table-wrapper">
-        <table className="pg-table">
+    <div className={styles.tableContainer}>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
           <thead>
             <tr>
               {columns.map((c) => (
@@ -56,7 +56,7 @@ import "./index.css";
           <tbody>
             {rows.length === 0 && !loading ? (
               <tr>
-                <td colSpan={columns.length} className="pg-empty">
+                <td colSpan={columns.length} className={styles.empty}>
                   No records
                 </td>
               </tr>
@@ -78,13 +78,13 @@ import "./index.css";
         </table>
       </div>
 
-      {error && <div className="pg-error">{error}</div>}
+      {error && <div className={styles.error}>{error}</div>}
 
-      <div className="pg-controls">
+      <div className={styles.controls}>
         <button
           onClick={loadMore}
           disabled={loading || !hasMore}
-          className={`pg-button ${hasMore ? "primary" : ""}`}
+          className={`${styles.button} ${hasMore ? styles.primary : ""}`}
         >
           {loading ? "Loading..." : hasMore ? "Load more" : "No more"}
         </button>
@@ -94,3 +94,4 @@ import "./index.css";
 }
 
 export default PaginatedTable;
+

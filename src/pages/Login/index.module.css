@@ -1,31 +1,31 @@
-.login-container {
+.loginContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;  
-  min-width: 100vw;        /* full screen height */
+  min-height: 100vh;
+  min-width: 100vw;
   background: #f3f4f6;
-  padding: 1rem;              /* padding for small screens */
+  padding: 1rem;
   box-sizing: border-box;
 }
 
-.login-box {
+.loginBox {
   background: white;
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 100%;                /* take full width by default */
-  max-width: 400px;           /* limit box width on larger screens */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
   text-align: center;
-  margin: 0 auto;             /* ✅ ensures horizontal centering inside flex */
+  margin: 0 auto;
 }
 
-.login-box h2 {
+.title {
   margin-bottom: 1.5rem;
   color: #333;
 }
 
-.login-box input {
+.input {
   width: 100%;
   padding: 0.75rem;
   margin: 0.5rem 0;
@@ -34,7 +34,7 @@
   font-size: 1rem;
 }
 
-.login-box button {
+.button {
   width: 100%;
   padding: 0.75rem;
   background: #2563eb;
@@ -46,23 +46,23 @@
   transition: background 0.2s ease;
 }
 
-.login-box button:hover {
+.button:hover {
   background: #1d4ed8;
 }
 
 /* 🔹 Mobile responsiveness */
 @media (max-width: 480px) {
-  .login-box {
+  .loginBox {
     padding: 1.5rem;
     border-radius: 10px;
   }
 
-  .login-box h2 {
+  .title {
     font-size: 1.25rem;
   }
 
-  .login-box input,
-  .login-box button {
+  .input,
+  .button {
     padding: 0.65rem;
     font-size: 0.95rem;
   }
@@ -70,8 +70,8 @@
 
 /* 🔹 Large desktop responsiveness */
 @media (min-width: 1200px) {
-  .login-box {
-    max-width: 450px; /* allow a slightly bigger box on large screens */
+  .loginBox {
+    max-width: 450px;
     padding: 2.5rem;
   }
 }

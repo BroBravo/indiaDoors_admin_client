@@ -1,38 +1,42 @@
-.home-container {
+.homeContainer {
   min-height: 100vh;
   min-width: 100vw;
   background: #f9fafb;
   display: flex;
   flex-direction: column;
+  position: relative;
+  top: 50px;
 }
 
-.home-header {
+.homeHeader {
   background: #2563eb;
   color: white;
   padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
 }
 
-.home-header h1 {
+.headerTitle {
   font-size: 1.5rem;
 }
 
-.home-header button {
+.logoutButton {
   background: #ef4444;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   color: white;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.home-header button:hover {
+.logoutButton:hover {
   background: #dc2626;
 }
 
-.home-main {
+.homeMain {
   flex: 1;
   padding: 2rem;
 }

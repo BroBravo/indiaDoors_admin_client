@@ -1,44 +1,10 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   return (
-//     <>
-//       <div>
-//         <a href="https://vite.dev" target="_blank">
-//           <img src={viteLogo} className="logo" alt="Vite logo" />
-//         </a>
-//         <a href="https://react.dev" target="_blank">
-//           <img src={reactLogo} className="logo react" alt="React logo" />
-//         </a>
-//       </div>
-//       <h1>Vite + React</h1>
-//       <div className="card">
-//         <button onClick={() => setCount((count) => count + 1)}>
-//           count is {count}
-//         </button>
-//         <p>
-//           Edit <code>src/App.jsx</code> and save to test HMR
-//         </p>
-//       </div>
-//       <p className="read-the-docs">
-//         Click on the Vite and React logos to learn more
-//       </p>
-//     </>
-//   )
-// }
-
-// export default App
-
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import LoginPage from "./pages/Login";
-import HomePage from "./pages/Home";
+import Orders from "./pages/Orders";
+import Users from "./pages/Users";
 import ProtectedRoute from "./components/protectedRoute.jsx";
-
+import Navbar from './components/Navbar';
+import Products from "./pages/Products";
 // ✅ helper: check token
 const isAuthenticated = () => {
   const token = localStorage.getItem("authToken");
@@ -54,17 +20,35 @@ const isAuthenticated = () => {
 };
 
 function App() {
+   const location = useLocation();
+  const hideNavbar = location.pathname === "/login";
   return (
-    <Routes>
-      
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={<ProtectedRoute>
-                  <HomePage />
-                 </ProtectedRoute>}
-      />
-    </Routes>
+    <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: '100vw'}}>
+     {!hideNavbar && <Navbar/>}
+      <div style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={<ProtectedRoute>
+                      <Orders />
+                    </ProtectedRoute>}
+          />
+          <Route
+            path="/users"
+            element={<ProtectedRoute>
+                      <Users />
+                    </ProtectedRoute>}
+          />
+           <Route
+            path="/products"
+            element={<ProtectedRoute>
+                      <Products />
+                    </ProtectedRoute>}
+          />
+        </Routes>
+      </div>  
+    </div>
   );
 }
 

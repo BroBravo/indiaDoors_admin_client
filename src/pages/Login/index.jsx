@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useUser } from "../../context/userContext";
-import "./index.css";
+import styles from "./index.module.css"; // ✅ CSS Module import
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -10,14 +10,10 @@ function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
-  //const alertedRef = useRef(false);
 
   useEffect(() => {
-    
     if (user) {
-             
-     // alert("User already logged in!");
-      navigate("/", { replace: true });  
+      navigate("/", { replace: true });
     }
   }, [user, navigate]);
 
@@ -33,54 +29,65 @@ function LoginPage() {
       const res = await axios.post(
         `${baseURL}/admin/user/login`,
         {
-          loginId: form.username,   // backend expects username OR phone
+          loginId: form.username, // backend expects username OR phone
           password: form.password,
         },
-        { withCredentials: true }  // ✅ important so cookie is stored
+        { withCredentials: true } // ✅ important so cookie is stored
       );
 
       if (res.data.success) {
         setUser({ username: form.username, role: res.data.role });
-        navigate("/");  // redirect to dashboard/home
+        navigate("/"); // redirect to dashboard/home
       } else {
         setError(res.data.message || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
       setError(
-        err.response?.data?.message || "Something went wrong. Please try again."
+        err.response?.data?.message ||
+          "Something went wrong. Please try again."
       );
     }
   };
 
   return (
     <>
-     {!user && <div className="login-container">
-      <form className="login-box" onSubmit={handleSubmit}>
-        <h2>Admin Login</h2>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
+      {!user && (
+        <div className={styles.loginContainer}>
+          <form className={styles.loginBox} onSubmit={handleSubmit}>
+            <h2 className={styles.title}>Admin Login</h2>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit">Login</button>
-      </form>
-    </div> }
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={form.username}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <button type="submit" className={styles.button}>
+              Login
+            </button>
+          </form>
+        </div>
+      )}
     </>
   );
 }
 
 export default LoginPage;
+
