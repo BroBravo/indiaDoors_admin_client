@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useUser } from "../../context/userContext";
+//import { useUser } from "../../context/userContext";
 import PaginatedTable from "../../components/PaginatedTable";
 import axios from "axios";
 import styles from "./index.module.css"; // ✅ CSS module import
@@ -9,20 +9,20 @@ function Products() {
     () => [
       { key: "product_id", header: "Product ID" },
       { key: "name", header: "Name" },
-      {
-        key: "image",
-        header: "Image",
-        render: (v) =>
-          v ? (
-            <img
-              src={v}
-              alt="Product"
-              style={{ width: "60px", height: "80px", objectFit: "cover", borderRadius: "6px" }}
-            />
-          ) : (
-            ""
-          ),
-      },
+      // {
+      //   key: "image",
+      //   header: "Image",
+      //   render: (v) =>
+      //     v ? (
+      //       <img
+      //         src={v}
+      //         alt="Product"
+      //         style={{ width: "60px", height: "80px", objectFit: "cover", borderRadius: "6px" }}
+      //       />
+      //     ) : (
+      //       ""
+      //     ),
+      // },
       { key: "mrp", header: "MRP", render: (v) => (v != null ? Number(v).toFixed(2) : "") },
       { key: "price", header: "Price", render: (v) => (v != null ? Number(v).toFixed(2) : "") },
       { key: "front_wrap", header: "Front Wrap" },
@@ -106,6 +106,17 @@ function Products() {
     return { items: data.items || [], hasMore: !!data.hasMore };
   };
 
+const fetchFilteredProducts = async (filters = {}) => {
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const { offset = 0, limit = 10, ...otherFilters } = filters;
+  const { data } = await axios.get(`${baseURL}/admin/product/get/filter`, {
+    params: { ...otherFilters, offset, limit },
+    withCredentials: true,
+  });
+  return { items: data.items || [], hasMore: !!data.hasMore };
+};
+
+  
 
   const fetchLaminates = async ({ offset, limit }) => {
     const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -139,6 +150,7 @@ function Products() {
         <PaginatedTable
           columns={productColumns}
           fetchPage={fetchProducts}
+          fetchFilteredPage={fetchFilteredProducts}
           pageSize={10}
           initialOffset={0}
         />

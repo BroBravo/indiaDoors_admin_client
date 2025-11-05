@@ -34,12 +34,25 @@
   font-size: 14px;
 }
 
+.searchInput {
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  font-size: 0.85rem;
+  border: 2px solid #7b7474;
+  border-radius: 4px;
+}
+.searchInput:focus {
+  border-color: #2057b0;
+  outline: none;
+}
+
 /* Table head */
 .table thead th {
   position: sticky;
   top: 0;
   background: var(--pg-header-bg);
-  text-align: left;
+  text-align: center;
   padding: 12px 14px;
   font-weight: 600;
   border-bottom: 1px solid var(--pg-border);
@@ -51,6 +64,7 @@
   padding: 12px 14px;
   border-bottom: 1px solid var(--pg-border);
   vertical-align: top;
+  text-align: center;
 }
 
 /* Hover rows */
@@ -63,6 +77,9 @@
   padding: 14px;
   text-align: center;
   color: #6b7280;
+}
+.emptyRow td {
+  height: 30px; /* consistent row height */
 }
 
 /* Error message */
@@ -103,6 +120,36 @@
 .button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.iconButton {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 6px 10px;
+  transition: background 0.2s;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageIndicator {
+  font-weight: 600;
 }
 
 /* Primary button variant */
