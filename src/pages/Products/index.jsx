@@ -127,6 +127,17 @@ const fetchFilteredProducts = async (filters = {}) => {
     return { items: data.items || [], hasMore: !!data.hasMore };
   };
 
+  const fetchFilteredLaminates = async (filters = {}) => {
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const { offset = 0, limit = 10, ...otherFilters } = filters;
+  const { data } = await axios.get(`${baseURL}/admin/product/laminate/get/filter`, {
+    params: { ...otherFilters, offset, limit },
+    withCredentials: true,
+  });
+  return { items: data.items || [], hasMore: !!data.hasMore };
+};
+
+
    const fetchCarvings = async ({ offset, limit }) => {
     const baseURL = import.meta.env.VITE_API_BASE_URL;
     const { data } = await axios.get(`${baseURL}/admin/product/carving/get/table`, {
@@ -135,6 +146,16 @@ const fetchFilteredProducts = async (filters = {}) => {
     });
     return { items: data.items || [], hasMore: !!data.hasMore };
   };
+
+  const fetchFilteredCarvings = async (filters = {}) => {
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+  const { offset = 0, limit = 10, ...otherFilters } = filters;
+  const { data } = await axios.get(`${baseURL}/admin/product/carving/get/filter`, {
+    params: { ...otherFilters, offset, limit },
+    withCredentials: true,
+  });
+  return { items: data.items || [], hasMore: !!data.hasMore };
+};
 
   return (
     <div className={styles.homeContainer}>
@@ -159,6 +180,7 @@ const fetchFilteredProducts = async (filters = {}) => {
         <PaginatedTable
           columns={laminateColumns}
           fetchPage={fetchLaminates}
+          fetchFilteredPage={fetchFilteredLaminates}
           pageSize={10}
           initialOffset={0}
         />
@@ -167,6 +189,7 @@ const fetchFilteredProducts = async (filters = {}) => {
         <PaginatedTable
           columns={laminateColumns}
           fetchPage={fetchCarvings}
+          fetchFilteredPage={fetchFilteredCarvings}
           pageSize={10}
           initialOffset={0}
         />
