@@ -1,6 +1,106 @@
-import { useEffect, useState, useCallback } from "react";
+// components/PaginatedTable/index.jsx
+import { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import styles from "./index.module.css";
+
+/**
+ * Generic image cell with hover + click preview.
+ * - Hover: small card near the thumbnail (desktop only).
+ * - Click: fullscreen overlay (desktop + touch).
+ */
+export function ImagePreviewCell({ src, label }) {
+  const [hoverPos, setHoverPos] = useState(null); // { top, left } | null
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const thumbRef = useRef(null);
+
+  if (!src) {
+    return <span>{label || "-"}</span>;
+  }
+
+  const handleMouseEnter = () => {
+    if (!thumbRef.current) return;
+    const rect = thumbRef.current.getBoundingClientRect();
+    setHoverPos({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 12,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoverPos(null);
+  };
+
+  const handleClickThumb = (e) => {
+    e.stopPropagation();
+    setOverlayOpen(true);
+  };
+
+  const handleCloseOverlay = () => setOverlayOpen(false);
+
+  const hoverCard =
+    hoverPos &&
+    createPortal(
+      <div
+        className={styles.imageHoverCard}
+        style={{
+          top: hoverPos.top,
+          left: hoverPos.left,
+        }}
+      >
+        <img
+          src={src}
+          alt={label || "Preview"}
+          className={styles.imageHoverImg}
+        />
+      </div>,
+      document.body
+    );
+
+  const overlay =
+    overlayOpen &&
+    createPortal(
+      <div className={styles.imageOverlay} onClick={handleCloseOverlay}>
+        <div
+          className={styles.imageOverlayInner}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img
+            src={src}
+            alt={label || "Preview large"}
+            className={styles.imageOverlayImg}
+          />
+        </div>
+      </div>,
+      document.body
+    );
+
+  return (
+    <>
+      <div className={styles.imageCell}>
+        <div
+          ref={thumbRef}
+          className={styles.imageThumbWrapper}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleClickThumb}
+        >
+          <img
+            src={src}
+            alt={label || "Preview"}
+            className={styles.imageThumb}
+          />
+        </div>
+        {label && <span>{label}</span>}
+      </div>
+
+      {hoverCard}
+      {overlay}
+    </>
+  );
+}
+
+/* ================= PAGINATED TABLE ================= */
 
 function PaginatedTable({
   columns,
@@ -8,7 +108,6 @@ function PaginatedTable({
   fetchFilteredPage = null,
   pageSize = 10,
   initialOffset = 0,
-  // Unified update callback
   // args: { ids: string[] | null, filters: object, updateData: object }
   onUpdateRows = null,
 }) {
@@ -16,14 +115,14 @@ function PaginatedTable({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState(() => {
-        const initial = {};
-        columns.forEach((c) => {
-          if (c.filterType === "checkbox" && c.defaultChecked) {
-            initial[c.key] = "1";      // value that means "checked"
-          }
-        });
-        return initial;
-});
+    const initial = {};
+    columns.forEach((c) => {
+      if (c.filterType === "checkbox" && c.defaultChecked) {
+        initial[c.key] = "1";
+      }
+    });
+    return initial;
+  });
 
   const [hasMore, setHasMore] = useState(true);
 
@@ -35,7 +134,7 @@ function PaginatedTable({
   const hasActiveFilters = Object.values(filters).some(
     (v) => v && v.trim() !== ""
   );
-  
+
   // === EDIT / BULK EDIT STATE ===
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState({});
@@ -47,7 +146,12 @@ function PaginatedTable({
   const [editValues, setEditValues] = useState({});
   const [editError, setEditError] = useState("");
 
-  const nonEditableKeys = new Set(["id", "product_id", "created_at", "updated_at"]);
+  const nonEditableKeys = new Set([
+    "id",
+    "product_id",
+    "created_at",
+    "updated_at",
+  ]);
 
   const getRowId = (row) => row.id ?? row.product_id ?? row._id;
 
@@ -78,7 +182,6 @@ function PaginatedTable({
         const safeItems = items || [];
         setRows(safeItems);
         setHasMore(!!more);
-        // ❌ no auto-select on bulk edit — selection is fully user-driven now
       } catch (err) {
         console.error(err);
         setError("Failed to load data.");
@@ -106,7 +209,6 @@ function PaginatedTable({
         const safeItems = items || [];
         setRows(safeItems);
         setHasMore(!!more);
-        // ❌ no auto-select here either
       } catch (err) {
         console.error(err);
         setError("Failed to load filtered data");
@@ -125,7 +227,7 @@ function PaginatedTable({
       loadFilteredPage(1);
     } else {
       setIsFiltered(false);
-      loadPage(pageIndex); // restore previous normal page
+      loadPage(pageIndex);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
@@ -172,12 +274,20 @@ function PaginatedTable({
   const toggleBulkEditMode = () => {
     if (!onUpdateRows) return;
     if (!bulkEditMode) {
-      // turning ON → no rows selected by default
+      const initialBulkValues = {};
+      columns.forEach((c) => {
+        if (c.editType === "checkbox") {
+          const fv = filters[c.key];
+          if (fv === "1" || fv === "0") {
+            initialBulkValues[c.key] = fv;
+          }
+        }
+      });
+
       setSelectedIds(new Set());
-      setBulkEditValues({});
+      setBulkEditValues(initialBulkValues);
       setBulkEditMode(true);
     } else {
-      // turning OFF
       setBulkEditMode(false);
       setBulkEditValues({});
       setSelectedIds(new Set());
@@ -186,6 +296,10 @@ function PaginatedTable({
 
   const handleBulkEditChange = (key, value) => {
     setBulkEditValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleBulkFileChange = (key, file) => {
+    setBulkEditValues((prev) => ({ ...prev, [key]: file || undefined }));
   };
 
   const handleRowCheckboxChange = (row, checked) => {
@@ -199,7 +313,6 @@ function PaginatedTable({
     });
   };
 
-  // 👉 computed on each render: is this page fully selected?
   const allSelectedThisPage =
     rows.length > 0 &&
     rows.every((r) => {
@@ -212,13 +325,11 @@ function PaginatedTable({
       const next = new Set(prev);
 
       if (allSelectedThisPage) {
-        // If all currently selected → unselect all on this page
         for (const r of rows) {
           const id = getRowId(r);
           if (id != null) next.delete(id);
         }
       } else {
-        // Otherwise select all rows on this page
         for (const r of rows) {
           const id = getRowId(r);
           if (id != null) next.add(id);
@@ -231,14 +342,37 @@ function PaginatedTable({
 
   const applyBulkUpdate = async () => {
     if (!onUpdateRows) return;
-    const sanitizedFilters = sanitizeFilters(filters);
-    const updateData = sanitizeUpdateData(bulkEditValues);
 
-    // Scenario:
-    // - selectedIds.size > 0 -> update those IDs
-    // - selectedIds.size === 0 -> treat as "all records" (IDs = null)
-    const ids =
-      selectedIds.size > 0 ? Array.from(selectedIds) : null;
+    if (selectedIds.size === 0) {
+      setError("No rows selected for bulk update.");
+      return;
+    }
+
+    const sanitizedFilters = sanitizeFilters(filters);
+
+    const rawUpdateData = { ...bulkEditValues };
+
+    columns.forEach((c) => {
+      if (c.editType === "checkbox") {
+        const headerVal = filters[c.key]; // "", "1", "0"
+        if (!headerVal) {
+          delete rawUpdateData[c.key];
+        } else if (rawUpdateData[c.key] === undefined) {
+          if (headerVal === "1" || headerVal === "0") {
+            rawUpdateData[c.key] = headerVal;
+          }
+        }
+      }
+    });
+
+    const updateData = sanitizeUpdateData(rawUpdateData);
+
+    if (Object.keys(updateData).length === 0) {
+      setError("No changes specified for bulk update.");
+      return;
+    }
+
+    const ids = Array.from(selectedIds);
 
     try {
       setUpdateLoading(true);
@@ -249,14 +383,12 @@ function PaginatedTable({
         updateData,
       });
 
-      // refresh current page after successful update
       if (isFiltered) {
         await loadFilteredPage(filteredPageIndex);
       } else {
         await loadPage(pageIndex);
       }
 
-      // reset bulk edit state
       setBulkEditMode(false);
       setBulkEditValues({});
       setSelectedIds(new Set());
@@ -281,6 +413,10 @@ function PaginatedTable({
     setEditValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleSingleFileChange = (key, file) => {
+    setEditValues((prev) => ({ ...prev, [key]: file || undefined }));
+  };
+
   const cancelSingleEdit = () => {
     setEditingRow(null);
     setEditValues({});
@@ -298,12 +434,11 @@ function PaginatedTable({
       setUpdateLoading(true);
       setEditError("");
       await onUpdateRows({
-        ids: [id], // single record scenario
+        ids: [id],
         filters: sanitizedFilters,
         updateData,
       });
 
-      // refresh current page
       if (isFiltered) {
         await loadFilteredPage(filteredPageIndex);
       } else {
@@ -322,7 +457,6 @@ function PaginatedTable({
 
   return (
     <div className={styles.tableContainer}>
-      {/* === Top controls (edit toggle / select all / apply) === */}
       {onUpdateRows && (
         <div className={styles.topControls}>
           <button
@@ -363,7 +497,6 @@ function PaginatedTable({
         <table className={styles.table}>
           <thead>
             <tr>
-              {/* first column: edit or checkbox */}
               {onUpdateRows && <th style={{ width: "60px" }}>Edit</th>}
               {columns.map((c) => (
                 <th key={c.key}>
@@ -371,25 +504,23 @@ function PaginatedTable({
                   {fetchFilteredPage && (
                     <>
                       {c.filterType === "select" ? (
-                        // 🔽 dropdown filter (Active / Inactive / All)
                         <select
                           className={styles.selectFilter}
-                          value={filters[c.key] ?? ""}        // "" => All
+                          value={filters[c.key] ?? ""}
                           onChange={(e) =>
                             handleFilterChange(c.key, e.target.value)
                           }
                           disabled={updateLoading}
                         >
-                          {(c.filterOptions || [{ value: "", label: "All" }]).map(
-                            (opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            )
-                          )}
+                          {(c.filterOptions || [
+                            { value: "", label: "All" },
+                          ]).map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                         </select>
                       ) : (
-                        // 🔤 default text filter
                         <input
                           type="text"
                           placeholder={`Search ${c.header}`}
@@ -408,27 +539,103 @@ function PaginatedTable({
             </tr>
           </thead>
 
-
-
           <tbody>
-            {/* Global edit row (only in bulk edit mode) */}
             {bulkEditMode && onUpdateRows && (
               <tr className={styles.bulkEditRow}>
                 <td className={styles.bulkEditLabel}>Edit</td>
-                {columns.map((c) => (
-                  <td key={c.key}>
-                    <input
-                      type="text"
-                      className={styles.bulkEditInput}
-                      placeholder={`New ${c.header}`}
-                      value={bulkEditValues[c.key] ?? ""}
-                      onChange={(e) =>
-                        handleBulkEditChange(c.key, e.target.value)
-                      }
-                      disabled={nonEditableKeys.has(c.key) || updateLoading}
-                    />
-                  </td>
-                ))}
+                {columns.map((c) => {
+                  const headerVal = filters[c.key];
+
+                  // checkbox
+                  if (c.editType === "checkbox") {
+                    const effectiveVal =
+                      bulkEditValues[c.key] ??
+                      (headerVal === "1" || headerVal === "0"
+                        ? headerVal
+                        : "");
+                    return (
+                      <td key={c.key}>
+                        <input
+                          type="checkbox"
+                          className={styles.bulkEditCheckbox}
+                          checked={effectiveVal === "1"}
+                          onChange={(e) =>
+                            handleBulkEditChange(
+                              c.key,
+                              e.target.checked ? "1" : "0"
+                            )
+                          }
+                          disabled={
+                            nonEditableKeys.has(c.key) ||
+                            updateLoading ||
+                            !headerVal
+                          }
+                        />
+                      </td>
+                    );
+                  }
+
+                  // select (laminates / carvings, etc.)
+                  if (c.editType === "select") {
+                    return (
+                      <td key={c.key}>
+                        <select
+                          className={styles.editSelect}
+                          value={bulkEditValues[c.key] ?? ""}
+                          onChange={(e) =>
+                            handleBulkEditChange(c.key, e.target.value)
+                          }
+                          disabled={nonEditableKeys.has(c.key) || updateLoading}
+                        >
+                          <option value="">
+                            {`(no change to ${c.header})`}
+                          </option>
+                          {(c.editOptions || []).map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    );
+                  }
+
+                  // file input in bulk row (no preview, applies to selected rows)
+                  if (c.editType === "file") {
+                    return (
+                      <td key={c.key}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className={styles.bulkFileInput}
+                          onChange={(e) =>
+                            handleBulkFileChange(
+                              c.key,
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          disabled={nonEditableKeys.has(c.key) || updateLoading}
+                        />
+                      </td>
+                    );
+                  }
+
+                  // default text
+                  return (
+                    <td key={c.key}>
+                      <input
+                        type="text"
+                        className={styles.bulkEditInput}
+                        placeholder={`New ${c.header}`}
+                        value={bulkEditValues[c.key] ?? ""}
+                        onChange={(e) =>
+                          handleBulkEditChange(c.key, e.target.value)
+                        }
+                        disabled={nonEditableKeys.has(c.key) || updateLoading}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
             )}
 
@@ -474,7 +681,6 @@ function PaginatedTable({
 
                       {columns.map((c) => {
                         const value = row[c.key];
-                      
                         return (
                           <td key={c.key}>
                             {c.render
@@ -487,7 +693,6 @@ function PaginatedTable({
                   );
                 })}
 
-                {/* pad empty rows */}
                 {rows.length < pageSize &&
                   Array.from({ length: pageSize - rows.length }).map((_, i) => (
                     <tr key={`empty-${i}`} className={styles.emptyRow}>
@@ -531,7 +736,6 @@ function PaginatedTable({
         </button>
       </div>
 
-      {/* === Loading overlay (for data + updates) === */}
       {(loading || updateLoading) && (
         <div className={styles.loadingOverlay}>
           <div className={styles.spinner}></div>
@@ -541,7 +745,6 @@ function PaginatedTable({
         </div>
       )}
 
-      {/* === Single-row edit modal === */}
       {editingRow && (
         <div className={styles.editOverlay}>
           <div className={styles.editModal}>
@@ -553,6 +756,94 @@ function PaginatedTable({
                 const value = editValues[key] ?? "";
                 const readOnly = nonEditableKeys.has(key);
 
+                const editType = c.editType || "text";
+
+                // checkbox
+                if (editType === "checkbox") {
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <input
+                        type="checkbox"
+                        checked={
+                          value === 1 || value === "1" || value === true
+                        }
+                        disabled={readOnly || updateLoading}
+                        onChange={(e) =>
+                          handleSingleEditChange(
+                            key,
+                            e.target.checked ? "1" : "0"
+                          )
+                        }
+                      />
+                    </div>
+                  );
+                }
+
+                // select (laminate / carving, etc.)
+                if (editType === "select") {
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <select
+                        className={styles.editSelect}
+                        value={value ?? ""}
+                        disabled={readOnly || updateLoading}
+                        onChange={(e) =>
+                          handleSingleEditChange(key, e.target.value)
+                        }
+                      >
+                        <option value="">Select {c.header}</option>
+                        {(c.editOptions || []).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                }
+
+                // file input (laminate / carving image)
+                if (editType === "file") {
+                  const originalSrc =
+                    typeof c.getImageSrc === "function"
+                      ? c.getImageSrc(editingRow)
+                      : null;
+
+                  const selectedFile = value instanceof File ? value : null;
+                  const previewSrc = selectedFile
+                    ? URL.createObjectURL(selectedFile)
+                    : originalSrc;
+
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <div className={styles.fileEditWrapper}>
+                        {previewSrc && (
+                          <img
+                            src={previewSrc}
+                            alt={c.header}
+                            className={styles.fileEditPreview}
+                          />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleSingleFileChange(
+                              key,
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          disabled={readOnly || updateLoading}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+
+                // default text
                 return (
                   <div key={key} className={styles.editField}>
                     <label className={styles.editLabel}>{c.header}</label>
@@ -598,3 +889,4 @@ function PaginatedTable({
 }
 
 export default PaginatedTable;
+

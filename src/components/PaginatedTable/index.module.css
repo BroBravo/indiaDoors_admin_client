@@ -9,17 +9,19 @@
   --pg-accent-contrast: #ffffff;
 }
 
-
-
 /* Wrapper for table scroll */
 .tableWrapper {
   width: 100%;
-  /* overflow-x: auto; */
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Core table */
 .table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   color: var(--pg-text);
@@ -39,6 +41,16 @@
   outline: none;
 }
 
+/* header filters select */
+.selectFilter {
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  border: 2px solid #7b7474;
+}
+
 /* Table head */
 .table thead th {
   position: sticky;
@@ -49,6 +61,7 @@
   font-weight: 600;
   border-bottom: 1px solid var(--pg-border);
   white-space: nowrap;
+  z-index: 1;
 }
 
 /* Table body */
@@ -71,7 +84,7 @@
   color: #6b7280;
 }
 .emptyRow td {
-  height: 30px; /* consistent row height */
+  height: 30px;
 }
 
 /* Error message */
@@ -114,14 +127,6 @@
   cursor: not-allowed;
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-}
-
 .iconButton {
   background: white;
   border: 1px solid #ddd;
@@ -162,7 +167,7 @@
   border-radius: 14px;
   box-shadow: var(--pg-shadow);
   overflow: visible;
-  position: relative; /* needed for overlay */
+  position: relative;
 }
 
 /* Top control bar */
@@ -192,6 +197,16 @@
   font-size: 0.85rem;
   border-radius: 6px;
   border: 1px solid #cbd5f5;
+}
+
+.bulkFileInput {
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+.bulkEditCheckbox {
+  width: 18px;
+  height: 18px;
 }
 
 /* Overlay during load/update */
@@ -263,6 +278,7 @@
 
 .editField {
   display: flex;
+  align-items: flex-start;
   flex-direction: column;
   gap: 4px;
 }
@@ -286,6 +302,15 @@
   color: #6b7280;
 }
 
+/* select in modal & bulk row */
+.editSelect {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
 .editActions {
   display: flex;
   justify-content: flex-end;
@@ -293,5 +318,97 @@
   margin-top: 14px;
 }
 
+/* ================= IMAGE PREVIEW CELL ================= */
 
+.imageCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
 
+.imageThumbWrapper {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.imageThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Hover card rendered via portal, positioned near the thumb */
+.imageHoverCard {
+  position: fixed;
+  transform: translateY(-50%);
+  padding: 8px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  width: 15vw;
+  height: 40vh;
+  max-width: 420px;
+  max-height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Only show the hover card on devices that support hover */
+@media (hover: none), (pointer: coarse) {
+  .imageHoverCard {
+    display: none;
+  }
+}
+
+.imageHoverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Fullscreen overlay (click / mobile) */
+.imageOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+}
+
+.imageOverlayInner {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.imageOverlayImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+/* file edit preview in modal */
+.fileEditWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileEditPreview {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}

@@ -23,9 +23,9 @@ function App() {
    const location = useLocation();
   const hideNavbar = location.pathname === "/login";
   return (
-    <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', minWidth: '100vw'}}>
+    <div className="App" >
      {!hideNavbar && <Navbar/>}
-      <div style={{ flex: 1 }}>
+      <div className="AppContent">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
