@@ -1,5 +1,3 @@
-
-// pages/Products/index.jsx
 import { useMemo, useState, useEffect } from "react";
 import PaginatedTable, { ImagePreviewCell } from "../../components/PaginatedTable";
 import axios from "axios";
@@ -26,7 +24,7 @@ function Products() {
         const lamItems = lamRes.data.items || [];
         setLaminateOptions(
           lamItems.map((l) => ({
-            value: l.name, // or l.id if your backend expects ID
+            value: l.name,
             label: l.name,
             image_path: l.image_path,
           }))
@@ -43,7 +41,7 @@ function Products() {
         const carItems = carRes.data.items || [];
         setCarvingOptions(
           carItems.map((c) => ({
-            value: c.name, // or c.id
+            value: c.name,
             label: c.name,
             image_path: c.image_path,
           }))
@@ -60,19 +58,39 @@ function Products() {
   const productColumns = useMemo(
     () => [
       { key: "product_id", header: "Product ID" },
-      { key: "name", header: "Name" },
+      { key: "name", header: "Name", editType: "text" },
       {
         key: "mrp",
         header: "MRP",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
       },
       {
         key: "price",
         header: "Price",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
       },
 
-      // FRONT WRAP
+       {
+      key: "wood_type",
+      header: "Wood Type",
+      render: (v) => v || "jungle wood",
+      editType: "select",          
+      createType: "select",        
+      selectOptions: [
+        { value: "jungle wood", label: "Jungle wood" },
+        { value: "saagon", label: "Saagon" },
+      ],
+      filterType: "select",
+      filterOptions: [
+        { value: "", label: "All" },
+        { value: "jungle wood", label: "Jungle wood" },
+        { value: "saagon", label: "Saagon" },
+      ],
+    },
+
+
       {
         key: "front_wrap",
         header: "Front Wrap",
@@ -85,7 +103,6 @@ function Products() {
         editType: "select",
         editOptions: laminateOptions,
       },
-      // BACK WRAP
       {
         key: "back_wrap",
         header: "Back Wrap",
@@ -98,7 +115,6 @@ function Products() {
         editType: "select",
         editOptions: laminateOptions,
       },
-      // FRONT CARVING
       {
         key: "front_carving",
         header: "Front Carving",
@@ -115,7 +131,6 @@ function Products() {
         editType: "select",
         editOptions: carvingOptions,
       },
-      // BACK CARVING
       {
         key: "back_carving",
         header: "Back Carving",
@@ -137,12 +152,27 @@ function Products() {
         key: "width_in",
         header: "Width (in)",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
       },
       {
         key: "height_in",
         header: "Height (in)",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
       },
+      {
+        key: "active",
+        header: "Active",
+        render: (v) => (v ? "✅" : "❌"),
+        filterType: "select",
+        filterOptions: [
+          { value: "", label: "All" },
+          { value: "1", label: "Active" },
+          { value: "0", label: "Inactive" },
+        ],
+        editType: "checkbox",
+      },
+
       {
         key: "created_at",
         header: "Created At",
@@ -162,7 +192,7 @@ function Products() {
   const laminateColumns = useMemo(
     () => [
       { key: "id", header: "Laminate ID" },
-      { key: "name", header: "Name" },
+      { key: "name", header: "Name", editType: "text" },
       {
         key: "image_path",
         header: "Image",
@@ -180,11 +210,13 @@ function Products() {
         key: "price",
         header: "Price",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
       },
       {
         key: "discount_perc",
         header: "Discount (%)",
         render: (v) => (v != null ? `${Number(v).toFixed(2)}%` : "0.00%"),
+        editType: "text",
       },
       {
         key: "active",
@@ -202,45 +234,17 @@ function Products() {
     [baseURL]
   );
 
-  /* ---------- Carving columns (reuse laminateColumns except header text) ---------- */
+  /* ---------- Carving columns ---------- */
 
-  const carvingColumns = laminateColumns.map((c) =>
-    c.key === "id"
-      ? { ...c, header: "Carving ID" }
-      : c
+  const carvingColumns = useMemo(
+    () =>
+      laminateColumns.map((c) =>
+        c.key === "id" ? { ...c, header: "Carving ID" } : c
+      ),
+    [laminateColumns]
   );
 
-  /* ---------- Helper: send JSON or FormData depending on Files ---------- */
-
-  const buildPayload = (ids, filters, updateData) => {
-    const hasFile = Object.values(updateData).some((v) => v instanceof File);
-
-    if (!hasFile) {
-      return {
-        data: { ids, filters, data: updateData },
-        headers: {},
-      };
-    }
-
-    const fd = new FormData();
-    fd.append("ids", JSON.stringify(ids));
-    fd.append("filters", JSON.stringify(filters));
-
-    Object.entries(updateData).forEach(([k, v]) => {
-      if (v instanceof File) {
-        fd.append(k, v);
-      } else if (v !== undefined && v !== null) {
-        fd.append(k, v);
-      }
-    });
-
-    return {
-      data: fd,
-      headers: { "Content-Type": "multipart/form-data" },
-    };
-  };
-
-  /* ---------- API fns ---------- */
+  /* ---------- API helpers ---------- */
 
   const fetchProducts = async ({ offset, limit }) => {
     const { data } = await axios.get(
@@ -267,17 +271,42 @@ function Products() {
 
   const updateProducts = async ({ ids, filters, updateData }) => {
     try {
-      const { data: payload, headers } = buildPayload(ids, filters, updateData);
-      const res = await axios.post(
+      const { data } = await axios.post(
         `${baseURL}/admin/product/bulk-update`,
-        payload,
-        { withCredentials: true, headers }
+        {
+          ids,
+          filters,
+          data: updateData,
+        },
+        { withCredentials: true }
       );
-      return res.data;
+      return data;
     } catch (err) {
       console.error("updateProducts failed:", err);
       throw err;
     }
+  };
+
+  const createProduct = async (newData) => {
+    // map only the columns we care about
+    const payload = {
+      name: newData.name ?? "",
+      mrp: newData.mrp ?? null,
+      price: newData.price ?? null,
+      front_wrap: newData.front_wrap ?? null,
+      back_wrap: newData.back_wrap ?? null,
+      front_carving: newData.front_carving ?? null,
+      back_carving: newData.back_carving ?? null,
+      width_in: newData.width_in ?? null,
+      height_in: newData.height_in ?? null,
+    };
+
+    const { data } = await axios.post(
+      `${baseURL}/admin/product/upload`,
+      payload,
+      { withCredentials: true }
+    );
+    return data;
   };
 
   const fetchLaminates = async ({ offset, limit }) => {
@@ -305,17 +334,42 @@ function Products() {
 
   const updateLaminates = async ({ ids, filters, updateData }) => {
     try {
-      const { data: payload, headers } = buildPayload(ids, filters, updateData);
-      const res = await axios.post(
+      const { data } = await axios.post(
         `${baseURL}/admin/product/laminate/bulk-update`,
-        payload,
-        { withCredentials: true, headers }
+        {
+          ids,
+          filters,
+          data: updateData,
+        },
+        { withCredentials: true }
       );
-      return res.data;
+      return data;
     } catch (err) {
       console.error("updateLaminates failed:", err);
       throw err;
     }
+  };
+
+  const createLaminate = async (newData) => {
+    const fd = new FormData();
+    fd.append("name", newData.name ?? "");
+    if (newData.image_path instanceof File) {
+      fd.append("image_path", newData.image_path);
+    }
+    if (newData.price != null) fd.append("price", newData.price);
+    if (newData.discount_perc != null)
+      fd.append("discount_perc", newData.discount_perc);
+    fd.append(
+      "active",
+      newData.active != null ? newData.active : "1"
+    );
+
+    const { data } = await axios.post(
+      `${baseURL}/admin/product/laminate/upload`,
+      fd,
+      { withCredentials: true }
+    );
+    return data;
   };
 
   const fetchCarvings = async ({ offset, limit }) => {
@@ -343,17 +397,42 @@ function Products() {
 
   const updateCarvings = async ({ ids, filters, updateData }) => {
     try {
-      const { data: payload, headers } = buildPayload(ids, filters, updateData);
-      const res = await axios.post(
+      const { data } = await axios.post(
         `${baseURL}/admin/product/carving/bulk-update`,
-        payload,
-        { withCredentials: true, headers }
+        {
+          ids,
+          filters,
+          data: updateData,
+        },
+        { withCredentials: true }
       );
-      return res.data;
+      return data;
     } catch (err) {
       console.error("updateCarvings failed:", err);
       throw err;
     }
+  };
+
+  const createCarving = async (newData) => {
+    const fd = new FormData();
+    fd.append("name", newData.name ?? "");
+    if (newData.image_path instanceof File) {
+      fd.append("image_path", newData.image_path);
+    }
+    if (newData.price != null) fd.append("price", newData.price);
+    if (newData.discount_perc != null)
+      fd.append("discount_perc", newData.discount_perc);
+    fd.append(
+      "active",
+      newData.active != null ? newData.active : "1"
+    );
+
+    const { data } = await axios.post(
+      `${baseURL}/admin/product/carving/upload`,
+      fd,
+      { withCredentials: true }
+    );
+    return data;
   };
 
   return (
@@ -367,6 +446,7 @@ function Products() {
           pageSize={10}
           initialOffset={0}
           onUpdateRows={updateProducts}
+          onCreateRow={createProduct}
         />
 
         <h2 className={styles.subHeading}>Laminates list</h2>
@@ -377,6 +457,7 @@ function Products() {
           pageSize={10}
           initialOffset={0}
           onUpdateRows={updateLaminates}
+          onCreateRow={createLaminate}
         />
 
         <h2 className={styles.subHeading}>Carvings list</h2>
@@ -387,6 +468,7 @@ function Products() {
           pageSize={10}
           initialOffset={0}
           onUpdateRows={updateCarvings}
+          onCreateRow={createCarving}
         />
       </main>
     </div>

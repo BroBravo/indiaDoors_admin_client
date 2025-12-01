@@ -1,4 +1,3 @@
-// components/PaginatedTable/index.jsx
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
@@ -6,8 +5,6 @@ import styles from "./index.module.css";
 
 /**
  * Generic image cell with hover + click preview.
- * - Hover: small card near the thumbnail (desktop only).
- * - Click: fullscreen overlay (desktop + touch).
  */
 export function ImagePreviewCell({ src, label }) {
   const [hoverPos, setHoverPos] = useState(null); // { top, left } | null
@@ -27,9 +24,7 @@ export function ImagePreviewCell({ src, label }) {
     });
   };
 
-  const handleMouseLeave = () => {
-    setHoverPos(null);
-  };
+  const handleMouseLeave = () => setHoverPos(null);
 
   const handleClickThumb = (e) => {
     e.stopPropagation();
@@ -110,6 +105,8 @@ function PaginatedTable({
   initialOffset = 0,
   // args: { ids: string[] | null, filters: object, updateData: object }
   onUpdateRows = null,
+  // create callback: (newData: object) => Promise
+  onCreateRow = null,
 }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -146,6 +143,11 @@ function PaginatedTable({
   const [editValues, setEditValues] = useState({});
   const [editError, setEditError] = useState("");
 
+  // Create modal
+  const [creating, setCreating] = useState(false);
+  const [createValues, setCreateValues] = useState({});
+  const [createError, setCreateError] = useState("");
+
   const nonEditableKeys = new Set([
     "id",
     "product_id",
@@ -155,17 +157,17 @@ function PaginatedTable({
 
   const getRowId = (row) => row.id ?? row.product_id ?? row._id;
 
-  // --- Helper to sanitize filters before sending
-  const sanitizeFilters = (f) =>
-    Object.fromEntries(
-      Object.entries(f).filter(([_, v]) => v && v.trim() !== "")
-    );
-
+  // --- Helper to sanitize data before sending
   const sanitizeUpdateData = (data) =>
     Object.fromEntries(
       Object.entries(data).filter(
         ([_, v]) => v !== "" && v !== null && v !== undefined
       )
+    );
+
+  const sanitizeFilters = (f) =>
+    Object.fromEntries(
+      Object.entries(f).filter(([_, v]) => v && v.trim() !== "")
     );
 
   // --- Load normal data (paginated)
@@ -455,20 +457,90 @@ function PaginatedTable({
     }
   };
 
+  // === CREATE HANDLERS ===
+
+  const startCreate = () => {
+    if (!onCreateRow || updateLoading || loading) return;
+    setCreateValues({});
+    setCreateError("");
+    setCreating(true);
+  };
+
+  const cancelCreate = () => {
+    setCreating(false);
+    setCreateValues({});
+    setCreateError("");
+  };
+
+  const handleCreateChange = (key, value) => {
+    setCreateValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleCreateFileChange = (key, file) => {
+    setCreateValues((prev) => ({ ...prev, [key]: file || undefined }));
+  };
+
+  const saveCreate = async () => {
+    if (!onCreateRow) return;
+    const data = sanitizeUpdateData(createValues);
+    if (Object.keys(data).length === 0) {
+      setCreateError("Please fill at least one field.");
+      return;
+    }
+
+    try {
+      setUpdateLoading(true);
+      setCreateError("");
+      await onCreateRow(data);
+
+      // after create, reload first page (respect filters)
+      if (hasActiveFilters && fetchFilteredPage) {
+        setIsFiltered(true);
+        setFilteredPageIndex(1);
+        await loadFilteredPage(1);
+      } else {
+        setIsFiltered(false);
+        setPageIndex(1);
+        await loadPage(1);
+      }
+
+      setCreating(false);
+      setCreateValues({});
+    } catch (err) {
+      console.error(err);
+      setCreateError("Failed to create record.");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   return (
     <div className={styles.tableContainer}>
-      {onUpdateRows && (
+      {(onUpdateRows || onCreateRow) && (
         <div className={styles.topControls}>
-          <button
-            type="button"
-            className={styles.button}
-            onClick={toggleBulkEditMode}
-            disabled={loading || updateLoading}
-          >
-            {bulkEditMode ? "Close Table Edit" : "Edit Table"}
-          </button>
+          {onUpdateRows && (
+            <button
+              type="button"
+              className={styles.button}
+              onClick={toggleBulkEditMode}
+              disabled={loading || updateLoading}
+            >
+              {bulkEditMode ? "Close Table Edit" : "Edit Table"}
+            </button>
+          )}
 
-          {bulkEditMode && (
+          {onCreateRow && (
+            <button
+              type="button"
+              className={styles.button}
+              onClick={startCreate}
+              disabled={loading || updateLoading}
+            >
+              Add Row
+            </button>
+          )}
+
+          {bulkEditMode && onUpdateRows && (
             <>
               <button
                 type="button"
@@ -546,7 +618,6 @@ function PaginatedTable({
                 {columns.map((c) => {
                   const headerVal = filters[c.key];
 
-                  // checkbox
                   if (c.editType === "checkbox") {
                     const effectiveVal =
                       bulkEditValues[c.key] ??
@@ -575,8 +646,8 @@ function PaginatedTable({
                     );
                   }
 
-                  // select (laminates / carvings, etc.)
                   if (c.editType === "select") {
+                    const options = c.selectOptions || c.editOptions || [];
                     return (
                       <td key={c.key}>
                         <select
@@ -590,7 +661,7 @@ function PaginatedTable({
                           <option value="">
                             {`(no change to ${c.header})`}
                           </option>
-                          {(c.editOptions || []).map((opt) => (
+                          {options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
                             </option>
@@ -600,7 +671,6 @@ function PaginatedTable({
                     );
                   }
 
-                  // file input in bulk row (no preview, applies to selected rows)
                   if (c.editType === "file") {
                     return (
                       <td key={c.key}>
@@ -620,7 +690,6 @@ function PaginatedTable({
                     );
                   }
 
-                  // default text
                   return (
                     <td key={c.key}>
                       <input
@@ -745,6 +814,7 @@ function PaginatedTable({
         </div>
       )}
 
+      {/* === Single-row edit modal === */}
       {editingRow && (
         <div className={styles.editOverlay}>
           <div className={styles.editModal}>
@@ -755,10 +825,9 @@ function PaginatedTable({
                 const key = c.key;
                 const value = editValues[key] ?? "";
                 const readOnly = nonEditableKeys.has(key);
-
                 const editType = c.editType || "text";
+                const options = c.selectOptions || c.editOptions || [];
 
-                // checkbox
                 if (editType === "checkbox") {
                   return (
                     <div key={key} className={styles.editField}>
@@ -780,7 +849,6 @@ function PaginatedTable({
                   );
                 }
 
-                // select (laminate / carving, etc.)
                 if (editType === "select") {
                   return (
                     <div key={key} className={styles.editField}>
@@ -794,7 +862,7 @@ function PaginatedTable({
                         }
                       >
                         <option value="">Select {c.header}</option>
-                        {(c.editOptions || []).map((opt) => (
+                        {options.map((opt) => (
                           <option key={opt.value} value={opt.value}>
                             {opt.label}
                           </option>
@@ -804,7 +872,6 @@ function PaginatedTable({
                   );
                 }
 
-                // file input (laminate / carving image)
                 if (editType === "file") {
                   const originalSrc =
                     typeof c.getImageSrc === "function"
@@ -843,7 +910,6 @@ function PaginatedTable({
                   );
                 }
 
-                // default text
                 return (
                   <div key={key} className={styles.editField}>
                     <label className={styles.editLabel}>{c.header}</label>
@@ -884,9 +950,141 @@ function PaginatedTable({
           </div>
         </div>
       )}
+
+      {/* === Create new row modal === */}
+      {creating && (
+        <div className={styles.editOverlay}>
+          <div className={styles.editModal}>
+            <h3 className={styles.editTitle}>Add New Row</h3>
+
+            <div className={styles.editBody}>
+              {columns.map((c) => {
+                const key = c.key;
+                if (nonEditableKeys.has(key)) return null;
+
+                const value = createValues[key] ?? "";
+                const fieldType = c.createType || c.editType || "text";
+                const options = c.selectOptions || c.editOptions || [];
+
+                if (fieldType === "checkbox") {
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <input
+                        type="checkbox"
+                        checked={
+                          value === 1 || value === "1" || value === true
+                        }
+                        disabled={updateLoading}
+                        onChange={(e) =>
+                          handleCreateChange(
+                            key,
+                            e.target.checked ? "1" : "0"
+                          )
+                        }
+                      />
+                    </div>
+                  );
+                }
+
+                if (fieldType === "select") {
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <select
+                        className={styles.editSelect}
+                        value={value ?? ""}
+                        disabled={updateLoading}
+                        onChange={(e) =>
+                          handleCreateChange(key, e.target.value)
+                        }
+                      >
+                        <option value="">Select {c.header}</option>
+                        {options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                }
+
+                if (fieldType === "file") {
+                  const selectedFile = value instanceof File ? value : null;
+                  const previewSrc = selectedFile
+                    ? URL.createObjectURL(selectedFile)
+                    : null;
+
+                  return (
+                    <div key={key} className={styles.editField}>
+                      <label className={styles.editLabel}>{c.header}</label>
+                      <div className={styles.fileEditWrapper}>
+                        {previewSrc && (
+                          <img
+                            src={previewSrc}
+                            alt={c.header}
+                            className={styles.fileEditPreview}
+                          />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleCreateFileChange(
+                              key,
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          disabled={updateLoading}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={key} className={styles.editField}>
+                    <label className={styles.editLabel}>{c.header}</label>
+                    <input
+                      className={styles.editInput}
+                      type="text"
+                      value={value}
+                      disabled={updateLoading}
+                      onChange={(e) =>
+                        handleCreateChange(key, e.target.value)
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {createError && <div className={styles.error}>{createError}</div>}
+
+            <div className={styles.editActions}>
+              <button
+                type="button"
+                className={styles.button}
+                onClick={cancelCreate}
+                disabled={updateLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${styles.button} ${styles.primary}`}
+                onClick={saveCreate}
+                disabled={updateLoading}
+              >
+                {updateLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default PaginatedTable;
-
