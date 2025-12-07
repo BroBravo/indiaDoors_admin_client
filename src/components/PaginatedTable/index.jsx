@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import styles from "./index.module.css";
+import { useUser } from "../../context/userContext";
 
 /**
  * Generic image cell with hover + click preview.
@@ -108,6 +109,15 @@ function PaginatedTable({
   // create callback: (newData: object) => Promise
   onCreateRow = null,
 }) {
+  
+  const { user } = useUser();
+  const canEditTables =
+  user?.role === "admin" || user?.role === "superuser";
+
+  // 👇 These are what the component will actually use
+  const allowUpdate = !!onUpdateRows && canEditTables;
+  const allowCreate = !!onCreateRow && canEditTables;
+
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -274,7 +284,8 @@ function PaginatedTable({
   // === BULK EDIT HANDLERS ===
 
   const toggleBulkEditMode = () => {
-    if (!onUpdateRows) return;
+    //if (!onUpdateRows) return;
+    if (!allowUpdate) return;
     if (!bulkEditMode) {
       const initialBulkValues = {};
       columns.forEach((c) => {
@@ -343,7 +354,8 @@ function PaginatedTable({
   };
 
   const applyBulkUpdate = async () => {
-    if (!onUpdateRows) return;
+    //if (!onUpdateRows) return;
+     if (!allowUpdate) return;
 
     if (selectedIds.size === 0) {
       setError("No rows selected for bulk update.");
@@ -405,7 +417,8 @@ function PaginatedTable({
   // === SINGLE ROW EDIT HANDLERS ===
 
   const startSingleEdit = (row) => {
-    if (!onUpdateRows || bulkEditMode) return;
+    // if (!onUpdateRows || bulkEditMode) return;
+    if (!allowUpdate || bulkEditMode) return;
     setEditingRow(row);
     setEditValues(row);
     setEditError("");
@@ -460,7 +473,8 @@ function PaginatedTable({
   // === CREATE HANDLERS ===
 
   const startCreate = () => {
-    if (!onCreateRow || updateLoading || loading) return;
+    // if (!onCreateRow || updateLoading || loading) return;
+     if (!allowCreate || updateLoading || loading) return;
     setCreateValues({});
     setCreateError("");
     setCreating(true);
@@ -481,7 +495,8 @@ function PaginatedTable({
   };
 
   const saveCreate = async () => {
-    if (!onCreateRow) return;
+    // if (!onCreateRow) return;
+    if (!allowCreate) return;
     const data = sanitizeUpdateData(createValues);
     if (Object.keys(data).length === 0) {
       setCreateError("Please fill at least one field.");
@@ -516,9 +531,9 @@ function PaginatedTable({
 
   return (
     <div className={styles.tableContainer}>
-      {(onUpdateRows || onCreateRow) && (
+    {(allowUpdate || allowCreate) && (
         <div className={styles.topControls}>
-          {onUpdateRows && (
+          {allowUpdate && (
             <button
               type="button"
               className={styles.button}
@@ -529,7 +544,7 @@ function PaginatedTable({
             </button>
           )}
 
-          {onCreateRow && (
+          {allowCreate && (
             <button
               type="button"
               className={styles.button}
@@ -540,7 +555,7 @@ function PaginatedTable({
             </button>
           )}
 
-          {bulkEditMode && onUpdateRows && (
+          {bulkEditMode && allowUpdate && (
             <>
               <button
                 type="button"
@@ -563,13 +578,14 @@ function PaginatedTable({
             </>
           )}
         </div>
-      )}
+    )}
+
 
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <thead>
             <tr>
-              {onUpdateRows && <th style={{ width: "60px" }}>Edit</th>}
+              {allowUpdate && <th style={{ width: "60px" }}>Edit</th>}
               {columns.map((c) => (
                 <th key={c.key}>
                   <div>{c.header}</div>
@@ -612,7 +628,7 @@ function PaginatedTable({
           </thead>
 
           <tbody>
-            {bulkEditMode && onUpdateRows && (
+            {bulkEditMode && allowUpdate && (
               <tr className={styles.bulkEditRow}>
                 <td className={styles.bulkEditLabel}>Edit</td>
                 {columns.map((c) => {
@@ -711,7 +727,7 @@ function PaginatedTable({
             {rows.length === 0 && !loading ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onUpdateRows ? 1 : 0)}
+                  colSpan={columns.length + (allowUpdate ? 1 : 0)}
                   className={styles.empty}
                 >
                   No records
@@ -724,7 +740,7 @@ function PaginatedTable({
                   const isSelected = selectedIds.has(id);
                   return (
                     <tr key={id ?? Math.random()}>
-                      {onUpdateRows && (
+                      {allowUpdate && (
                         <td>
                           {bulkEditMode ? (
                             <input
@@ -765,7 +781,7 @@ function PaginatedTable({
                 {rows.length < pageSize &&
                   Array.from({ length: pageSize - rows.length }).map((_, i) => (
                     <tr key={`empty-${i}`} className={styles.emptyRow}>
-                      {onUpdateRows && <td>&nbsp;</td>}
+                      {allowUpdate && <td>&nbsp;</td>}
                       {columns.map((_, j) => (
                         <td key={j}>&nbsp;</td>
                       ))}

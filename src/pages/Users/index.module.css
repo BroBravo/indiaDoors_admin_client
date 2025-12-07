@@ -1,0 +1,193 @@
+.userPage {
+  padding-top: 80px; /* account for fixed navbar */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: 1.5rem;
+  box-sizing: border-box;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.section {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 200px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.75rem;
+}
+
+.input,
+.select {
+  margin-top: 0.25rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #d4d4d4;
+  font-size: 0.9rem;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+.submitButton {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 4px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.submitButton:not(:disabled):hover {
+  background: #1d4ed8;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.success {
+  color: #15803d;
+  font-size: 0.85rem;
+}
+
+/* ============ Admin badge (click-toggle) ============ */
+
+.adminBadge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.adminBadgeLabel {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.adminBadgeTooltip {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: #111827;
+  color: #f9fafb;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 20;
+}
+
+.adminBadgeOpen .adminBadgeTooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.adminBadge:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+/* ===== Full viewport width sections for tables ===== */
+
+.fullWidthSection {
+  /* Break out of the centered container and span the viewport */
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  width: 100vw;
+  max-width: 100vw;
+  border-radius: 0; /* optional: full-width card edges */
+}
+
+@media (max-width: 768px) {
+  .userPage {
+    padding-inline: 1rem;
+  }
+
+  .section {
+    padding: 1rem;
+  }
+
+  .pageTitle {
+    align-items: flex-start;
+  }
+
+  .fullWidthSection {
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+}

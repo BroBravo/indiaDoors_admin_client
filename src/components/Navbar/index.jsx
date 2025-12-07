@@ -2,12 +2,22 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import styles from "./index.module.css";
 import { useUser } from "../../context/userContext";
+
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // mobile nav
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // username/logout box
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
-  const { logout } = useUser();
+
+  const { user, logout } = useUser();
+
+  const handleLogout = () => {
+    setIsUserMenuOpen(false);
+    setIsOpen(false);
+    logout();
+  };
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.navContainer}>
@@ -15,6 +25,7 @@ export default function Navbar() {
           IndiaDoors
         </Link>
 
+        {/* Hamburger for mobile */}
         <button
           className={`${styles.hamburger} ${isOpen ? styles.active : ""}`}
           onClick={toggleMenu}
@@ -25,21 +36,54 @@ export default function Navbar() {
           <span className={styles.bar}></span>
         </button>
 
+        {/* Center / left menu */}
         <div className={`${styles.navMenu} ${isOpen ? styles.show : ""}`}>
           <Link to="/" onClick={closeMenu} className={styles.navLink}>
             Orders
           </Link>
-          <Link to="/users" onClick={closeMenu} className={styles.navLink}>
-            Users
-          </Link>
-          
+
+          {/* 🔐 Only visible for admin */}
+          {user?.role === "admin" && (
+            <Link to="/users" onClick={closeMenu} className={styles.navLink}>
+              Users
+            </Link>
+          )}
+
           <Link to="/products" onClick={closeMenu} className={styles.navLink}>
             Products
           </Link>
         </div>
-        <button onClick={logout} className={styles.navLogin}>
-            Logout
-        </button>
+
+        {/* Right side: role badge + CLICK-TOGGLE dropdown */}
+        {user && (
+          <div className={styles.userArea}>
+            {/* Role pill on the right */}
+            <button
+              type="button"
+              className={styles.roleBadge}
+              onClick={() => setIsUserMenuOpen((prev) => !prev)} // ✅ pure toggle
+            >
+              {user.role}
+            </button>
+
+            {isUserMenuOpen && (
+              <div className={styles.userDropdown}>
+                <div className={styles.userInfo}>
+                  <span className={styles.userLabel}>Logged in as</span>
+                  <span className={styles.userName}>{user.username}</span>
+                  <span className={styles.userRole}>({user.role})</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.logoutButton}
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   );
