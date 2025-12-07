@@ -21,34 +21,41 @@ function LoginPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await axios.post(
-        `${baseURL}/admin/user/login`,
-        {
-          loginId: form.username, // backend expects username OR phone
-          password: form.password,
+  try {
+    const res = await axios.post(
+      `${baseURL}/admin/user/login`,
+      {
+        loginId: form.username, // backend expects username OR phone
+        password: form.password,
+      },
+      {
+        withCredentials: true, // ✅ cookie
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        { withCredentials: true } // ✅ important so cookie is stored
-      );
-
-      if (res.data.success) {
-        setUser({ username: form.username, role: res.data.role });
-        navigate("/"); // redirect to dashboard/home
-      } else {
-        setError(res.data.message || "Login failed");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(
-        err.response?.data?.message ||
-          "Something went wrong. Please try again."
-      );
+    );
+
+    if (res.data.success) {
+      setUser({ username: form.username, role: res.data.role });
+      navigate("/"); // redirect to dashboard/home
+    } else {
+      setError(res.data.message || "Login failed");
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    setError(
+      err.response?.data?.message ||
+        "Something went wrong. Please try again."
+    );
+  }
+};
+
 
   return (
     <>
