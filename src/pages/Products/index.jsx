@@ -61,13 +61,13 @@ function Products() {
       { key: "name", header: "Name", editType: "text" },
       {
         key: "mrp",
-        header: "MRP",
+        header: "MRP(INR)",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
         editType: "text",
       },
       {
         key: "price",
-        header: "Price",
+        header: "Price(INR)",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
         editType: "text",
       },
@@ -208,7 +208,7 @@ function Products() {
       },
       {
         key: "price",
-        header: "Price",
+        header: "Price(INR)",
         render: (v) => (v != null ? Number(v).toFixed(2) : ""),
         editType: "text",
       },
@@ -242,7 +242,50 @@ function Products() {
         c.key === "id" ? { ...c, header: "Carving ID" } : c
       ),
     [laminateColumns]
+  ); 
+
+    /* ---------- Wood columns ---------- */
+
+  const woodColumns = useMemo(
+    () => [
+      { key: "id", header: "Wood ID" },
+
+      { key: "wood_name", header: "Name", editType: "text" },
+
+      {
+        key: "price_per_sqft",
+        header: "Price/sqft(INR)",
+        render: (v) => (v != null ? Number(v).toFixed(2) : ""),
+        editType: "text",
+      },
+
+      {
+        key: "is_active",
+        header: "Active",
+        render: (v) => (v ? "✅" : "❌"),
+        filterType: "select",
+        filterOptions: [
+          { value: "", label: "All" },
+          { value: "1", label: "Active" },
+          { value: "0", label: "Inactive" },
+        ],
+        editType: "checkbox",
+      },
+
+      {
+        key: "created_at",
+        header: "Created At",
+        render: (v) => (v ? new Date(v).toLocaleString() : ""),
+      },
+      {
+        key: "updated_at",
+        header: "Updated At",
+        render: (v) => (v ? new Date(v).toLocaleString() : ""),
+      },
+    ],
+    []
   );
+
 
   /* ---------- API helpers ---------- */
 
@@ -433,7 +476,66 @@ function Products() {
       { withCredentials: true }
     );
     return data;
+  }; 
+
+    const fetchWoods = async ({ offset, limit }) => {
+    const { data } = await axios.get(
+      `${baseURL}/admin/product/wood/get/table`,
+      {
+        params: { offset, limit },
+        withCredentials: true,
+      }
+    );
+    return { items: data.items || [], hasMore: !!data.hasMore };
   };
+
+  const fetchFilteredWoods = async (filters = {}) => {
+    const { offset = 0, limit = 10, ...otherFilters } = filters;
+    const { data } = await axios.get(
+      `${baseURL}/admin/product/wood/get/filter`,
+      {
+        params: { ...otherFilters, offset, limit },
+        withCredentials: true,
+      }
+    );
+    return { items: data.items || [], hasMore: !!data.hasMore };
+  };
+
+  const updateWoods = async ({ ids, filters, updateData }) => {
+    try {
+      const { data } = await axios.post(
+        `${baseURL}/admin/product/wood/bulk-update`,
+        {
+          ids,
+          filters,
+          data: updateData,
+        },
+        { withCredentials: true }
+      );
+      return data;
+    } catch (err) {
+      console.error("updateWoods failed:", err);
+      throw err;
+    }
+  };
+
+  const createWood = async (newData) => {
+    const payload = {
+      wood_name: newData.wood_name ?? "",
+      price: newData.price_per_sqft ?? null,
+      // default to active if not explicitly set
+      is_active:
+        newData.is_active != null ? newData.is_active : 1,
+    };
+
+    const { data } = await axios.post(
+      `${baseURL}/admin/product/wood/upload`,
+      payload,
+      { withCredentials: true }
+    );
+    return data;
+  };
+
 
   return (
     <div className={styles.homeContainer}>
@@ -470,6 +572,18 @@ function Products() {
           onUpdateRows={updateCarvings}
           onCreateRow={createCarving}
         />
+
+        <h2 className={styles.subHeading}>Woods list</h2>
+        <PaginatedTable
+          columns={woodColumns}
+          fetchPage={fetchWoods}
+          fetchFilteredPage={fetchFilteredWoods}
+          pageSize={10}
+          initialOffset={0}
+          onUpdateRows={updateWoods}
+          onCreateRow={createWood}
+        />
+
       </main>
     </div>
   );

@@ -17,8 +17,14 @@ function Orders() {
       { key: "order_status", header: "Order Status" },
       { key: "payment_status", header: "Payment Status" },
       { key: "payment_method", header: "Method" },
-      { key: "shipping_address_id", header: "Ship Addr ID" },
-      { key: "billing_address_id", header: "Bill Addr ID" },
+      {
+        key: "shipping_address_text",
+        header: "Shipping Address",
+      },
+      {
+        key: "billing_address_text",
+        header: "Billing Address",
+      },
       { key: "tracking_id", header: "Tracking" },
       {
         key: "expected_delivery",
